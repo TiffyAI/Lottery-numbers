@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TiffyAI Lottery Draw</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffff;
+      background: black;
+    }
+
+    .slideshow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+      animation: slideShow 36s infinite;
+    }
+
+    @keyframes slideShow {
+      0% { background-image: url('lot1.jpg'); }
+      16% { background-image: url('lot2.jpg'); }
+      33% { background-image: url('lot3.jpg'); }
+      50% { background-image: url('lot4.jpg'); }
+      67% { background-image: url('lot5.jpg'); }
+      84% { background-image: url('lot6.jpg'); }
+      100% { background-image: url('lot1.jpg'); }
+    }
+
+    .container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 20px #00ffff;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      color: #00ffff;
+    }
+
+    .number-inputs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .number-inputs input {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2em;
+      text-align: center;
+      border: 2px solid #00ffff;
+      background: transparent;
+      color: #00ffff;
+      border-radius: 8px;
+    }
+
+    button {
+      background: #00ffff;
+      color: black;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #00cccc;
+    }
+
+    .console {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #00ffff;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+
+    .result-numbers {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .result-number {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2em;
+      background: #00ffff;
+      color: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00ffff;
+      animation: popIn 0.6s ease forwards;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="slideshow"></div>
+  <div class="container">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <div class="number-inputs">
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+      <input type="number" min="1" max="49" />
+    </div>
+    <button onclick="submitNumbers()">Submit My Lucky Numbers</button>
+    <div class="console" id="console"></div>
+    <div class="result-numbers" id="results"></div>
+  </div>
+
+  <script>
+    const consoleEl = document.getElementById('console');
+    const resultsEl = document.getElementById('results');
+
+    function submitNumbers() {
+      const inputs = document.querySelectorAll('.number-inputs input');
+      const numbers = Array.from(inputs).map(i => parseInt(i.value)).filter(n => !isNaN(n));
+      if (numbers.length !== 7 || new Set(numbers).size !== 7 || numbers.some(n => n < 1 || n > 49)) {
+        alert('Please enter 7 unique numbers between 1 and 49.');
+        return;
+      }
+
+      localStorage.setItem('round1', JSON.stringify(numbers));
+      consoleEl.textContent = `You will also receive 1 TiffyAI for buying 1 Ticket for Round 1. Come back here in 3 days to see if you won. You will now be redirected to make your purchase.`;
+
+      setTimeout(() => {
+        window.location.href = 'https://tiffyai.github.io/Lottery/';
+      }, 4000);
+    }
+
+    // Simulate results instantly for now (call after redirect in real setup)
+    window.onload = function() {
+      const saved = JSON.parse(localStorage.getItem('round1') || '[]');
+      if (saved.length !== 7) return;
+
+      const draw = [];
+      while (draw.length < 7) {
+        const n = Math.floor(Math.random() * 49) + 1;
+        if (!draw.includes(n)) draw.push(n);
+      }
+
+      let delay = 0;
+      draw.forEach((num, index) => {
+        setTimeout(() => {
+          const span = document.createElement('div');
+          span.className = 'result-number';
+          span.textContent = num;
+          resultsEl.appendChild(span);
+        }, delay);
+        delay += 700;
+      });
+
+      setTimeout(() => {
+        const match = draw.filter(n => saved.includes(n)).length;
+        let reward = 0;
+        if (match === 3) reward = 50;
+        if (match === 4) reward = 150;
+        if (match === 5) reward = 200;
+        if (match === 6) reward = 500;
+        if (match === 7) reward = 1000;
+
+        if (reward > 0) {
+          const claimBtn = document.createElement('button');
+          claimBtn.textContent = `Claim ${reward} TiffyAI Tokens`;
+          claimBtn.onclick = async () => {
+            if (window.ethereum) {
+              const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+              const from = accounts[0];
+              const to = '0xF27d595F962ed722F39889B23682B39F712B4Da8';
+              const amount = reward * 1e18;
+              await ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [{ from, to, value: '0x0', data: '0x' }] // token contract tx logic goes here
+              });
+              alert(`Successfully claimed ${reward} TiffyAI tokens!`);
+            }
+          };
+          consoleEl.appendChild(document.createElement('br'));
+          consoleEl.appendChild(claimBtn);
+        }
+      }, delay + 1000);
+    }
+  </script>
+</body>
+</html>

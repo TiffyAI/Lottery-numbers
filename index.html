@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TiffyAI Lottery</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background-color: black;
+      color: #00f0ff;
+      overflow: hidden;
+    }
+    .slideshow {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: -1;
+    }
+    .slideshow img {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      position: absolute;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
+    }
+    .slideshow img.active {
+      opacity: 1;
+    }
+    .lottery-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-top: 5vh;
+    }
+    h1 {
+      font-size: 32px;
+      color: #00f0ff;
+      text-shadow: 0 0 10px #ff00d4;
+    }
+    .numbers {
+      margin-top: 20px;
+    }
+    .number-input {
+      padding: 10px;
+      font-size: 20px;
+      width: 60px;
+      margin: 5px;
+      border-radius: 10px;
+      border: none;
+      text-align: center;
+    }
+    .glow-button {
+      background: linear-gradient(135deg, #00f0ff, #ff00d4);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 18px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00f0ff, 0 0 30px #ff00d4;
+      margin-top: 20px;
+    }
+    #console {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 15px;
+      color: white;
+      font-size: 18px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 0 20px #00f0ff;
+    }
+    .chosen {
+      font-size: 24px;
+      color: #ff00d4;
+      text-shadow: 0 0 8px #00f0ff;
+    }
+    #claimButton {
+      display: none;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="slideshow">
+    <img src="lot1.jpg" class="active">
+    <img src="lot2.jpg">
+    <img src="lot3.jpg">
+    <img src="lot4.jpg">
+    <img src="lot5.jpg">
+    <img src="lot6.jpg">
+  </div>
+
+  <div class="lottery-container">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <div class="numbers">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+      <input class="number-input" type="number" min="1" max="49">
+    </div>
+    <button class="glow-button" onclick="submitNumbers()">Submit My Lucky Numbers</button>
+
+    <div id="console"></div>
+    <button class="glow-button" id="claimButton" onclick="claimReward()">Claim Reward</button>
+  </div>
+
+  <script>
+    const rewardAddress = "0xF27d595F962ed722F39889B23682B39F712B4Da8";
+
+    function submitNumbers() {
+      const inputs = document.querySelectorAll('.number-input');
+      const nums = [...inputs].map(input => parseInt(input.value)).filter(n => !isNaN(n));
+      if (new Set(nums).size !== 7 || nums.some(n => n < 1 || n > 49)) {
+        alert('Please enter 7 unique numbers between 1 and 49.');
+        return;
+      }
+      localStorage.setItem('round1', JSON.stringify(nums));
+      const ticketCount = parseInt(localStorage.getItem('ticketCount') || '0') + 1;
+      localStorage.setItem('ticketCount', ticketCount);
+
+      document.getElementById('console').innerHTML = `
+        <div>You bought <b>${ticketCount}</b> ticket(s) for Round 1!</div>
+        <div class="chosen">Your Lucky Numbers: ${nums.join(', ')}</div>
+      `;
+    }
+
+    function drawResults() {
+      const draw = [];
+      while (draw.length < 7) {
+        const n = Math.floor(Math.random() * 49) + 1;
+        if (!draw.includes(n)) draw.push(n);
+      }
+      const resultDiv = document.createElement('div');
+      resultDiv.innerHTML = `<h2>Draw Results:</h2><div class="chosen">${draw.join(', ')}</div>`;
+      document.getElementById('console').prepend(resultDiv);
+
+      const user = JSON.parse(localStorage.getItem('round1')) || [];
+      const match = user.filter(n => draw.includes(n)).length;
+      if (match >= 3) {
+        document.getElementById('claimButton').style.display = 'inline-block';
+        localStorage.setItem('matchCount', match);
+      }
+    }
+
+    async function claimReward() {
+      const match = parseInt(localStorage.getItem('matchCount'));
+      let amount = 0;
+      if (match === 3) amount = 100;
+      else if (match === 4) amount = 150;
+      else if (match === 5) amount = 200;
+      else if (match === 6) amount = 500;
+      else if (match === 7) amount = 1000;
+      else return;
+
+      if (typeof window.ethereum === 'undefined') {
+        alert('Please connect your wallet.');
+        return;
+      }
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const sender = accounts[0];
+
+      try {
+        await web3.eth.sendTransaction({
+          from: rewardAddress,
+          to: sender,
+          value: web3.utils.toWei((amount * 0.00001).toString(), 'ether') // assuming 0.00001 ETH = 1 TiffyAI
+        });
+        alert(`You claimed ${amount} TiffyAI Tokens!`);
+        document.getElementById('claimButton').style.display = 'none';
+      } catch (e) {
+        alert('Claim failed.');
+        console.error(e);
+      }
+    }
+
+    // Rotate slideshow
+    let index = 0;
+    setInterval(() => {
+      const slides = document.querySelectorAll('.slideshow img');
+      slides.forEach((img, i) => img.classList.remove('active'));
+      slides[index].classList.add('active');
+      index = (index + 1) % slides.length;
+    }, 4000);
+
+    // Auto draw every 10 days (for test, call drawResults manually)
+    // drawResults();
+  </script>
+</body>
+</html>

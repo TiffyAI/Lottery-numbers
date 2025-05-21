@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TiffyAI Lottery</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: black;
+      color: #00f7ff;
+      overflow-x: hidden;
+    }
+    .slideshow {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+      animation: slideshow 30s infinite;
+    }
+    @keyframes slideshow {
+      0% { background-image: url('lot1.jpg'); }
+      16% { background-image: url('lot2.jpg'); }
+      32% { background-image: url('lot3.jpg'); }
+      48% { background-image: url('lot4.jpg'); }
+      64% { background-image: url('lot5.jpg'); }
+      80% { background-image: url('lot6.jpg'); }
+      100% { background-image: url('lot1.jpg'); }
+    }
+    .container {
+      text-align: center;
+      margin-top: 100px;
+    }
+    h1 {
+      font-size: 2rem;
+      text-shadow: 0 0 10px #00f7ff;
+    }
+    input {
+      padding: 10px;
+      font-size: 1.2rem;
+      width: 60%;
+      margin: 10px 0;
+      border: 2px solid #00f7ff;
+      border-radius: 10px;
+      background: transparent;
+      color: white;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      background: #00f7ff;
+      color: black;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00f7ff;
+    }
+    #console, #result, #reward {
+      margin-top: 30px;
+      font-size: 1.2rem;
+    }
+    .number-ball {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      margin: 5px;
+      background: #00f7ff;
+      color: black;
+      border-radius: 50%;
+      font-weight: bold;
+      animation: pop 0.3s ease-in;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="slideshow"></div>
+  <div class="container">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <input id="numbersInput" placeholder="e.g. 5,12,19,24,33,45,49" />
+    <br>
+    <button onclick="submitNumbers()">Submit My Lucky Numbers</button>
+    <div id="console"></div>
+    <div id="result"></div>
+    <div id="reward"></div>
+  </div>
+
+  <script>
+    let chosenNumbers = [];
+    let drawNumbers = [];
+
+    function submitNumbers() {
+      const input = document.getElementById('numbersInput').value;
+      const nums = input.split(',').map(n => parseInt(n.trim())).filter(n => n >= 1 && n <= 49);
+
+      if (nums.length !== 7) {
+        alert('Please enter exactly 7 valid numbers between 1 and 49.');
+        return;
+      }
+
+      chosenNumbers = nums;
+      localStorage.setItem('lotteryRound1', JSON.stringify(chosenNumbers));
+      document.getElementById('console').innerHTML = `You will also receive 1 TiffyAI for buying 1 Ticket for Round 1. Come back here in 3 days to see if you won. You will now be redirected to make your purchase.`;
+      setTimeout(() => {
+        window.location.href = 'https://tiffyai.github.io/Lottery/';
+      }, 4000);
+
+      setTimeout(() => {
+        drawLottery();
+      }, 5000);
+    }
+
+    function drawLottery() {
+      drawNumbers = [];
+      while (drawNumbers.length < 7) {
+        const rand = Math.floor(Math.random() * 49) + 1;
+        if (!drawNumbers.includes(rand)) drawNumbers.push(rand);
+      }
+      animateDraw(0);
+    }
+
+    function animateDraw(index) {
+      if (index >= 7) {
+        showResult();
+        return;
+      }
+      const resultDiv = document.getElementById('result');
+      let roll = 0;
+      const interval = setInterval(() => {
+        roll = Math.floor(Math.random() * 49) + 1;
+        resultDiv.innerHTML = drawNumbers.slice(0, index).map(n => `<div class='number-ball'>${n}</div>`).join('') + `<div class='number-ball'>${roll}</div>`;
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        resultDiv.innerHTML = drawNumbers.slice(0, index + 1).map(n => `<div class='number-ball'>${n}</div>`).join('');
+        animateDraw(index + 1);
+      }, 1500);
+    }
+
+    function showResult() {
+      let matchCount = chosenNumbers.filter(n => drawNumbers.includes(n)).length;
+      let reward = 0;
+      if (matchCount === 3) reward = 50;
+      if (matchCount === 4) reward = 150;
+      if (matchCount === 5) reward = 200;
+      if (matchCount === 6) reward = 500;
+      if (matchCount === 7) reward = 1000;
+
+      if (reward > 0) {
+        document.getElementById('reward').innerHTML = `
+          <h2>Congratulations!</h2>
+          <p>You matched ${matchCount} numbers and won ${reward} TiffyAI Tokens.</p>
+          <button onclick="claimReward(${reward})">Claim Reward</button>
+        `;
+      } else {
+        document.getElementById('reward').innerHTML = `<p>No reward this time. Try again next round!</p>`;
+      }
+    }
+
+    async function claimReward(amount) {
+      if (typeof window.ethereum === 'undefined') {
+        alert('Please connect a wallet.');
+        return;
+      }
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const tokenContract = new ethers.Contract(
+        '0xF27d595F962ed722F39889B23682B39F712B4Da8',
+        ["function transfer(address to, uint256 amount) public returns (bool)"],
+        signer
+      );
+      const address = await signer.getAddress();
+      const amountWei = ethers.utils.parseUnits(amount.toString(), 18);
+      try {
+        const tx = await tokenContract.transfer(address, amountWei);
+        await tx.wait();
+        document.getElementById('reward').innerHTML = `<p>Reward of ${amount} TiffyAI successfully claimed!</p>`;
+      } catch (err) {
+        alert('Transaction failed: ' + err.message);
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+</body>
+</html>

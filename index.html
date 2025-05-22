@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TiffyAI Lotto</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('lottery-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    #slideshow-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99;
+    }
+    #slideshow {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #00f0ff;
+    }
+    #lotto-input-ui {
+      display: none;
+      text-align: center;
+      padding-top: 100px;
+    }
+    .number-block {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      margin: 5px;
+      font-size: 18px;
+      text-align: center;
+      border-radius: 8px;
+      border: 2px solid #00f0ff;
+      background: rgba(0,0,0,0.5);
+      color: #00f0ff;
+    }
+    #submitBtn {
+      margin-top: 20px;
+      padding: 10px 30px;
+      font-size: 18px;
+      background: gold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #resultMsg {
+      color: #fff;
+      margin-top: 20px;
+      font-size: 20px;
+      text-shadow: 0 0 10px #00f0ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="slideshow-container">
+    <img id="slideshow" src="lot1.jpg" alt="Slideshow" />
+  </div>
+
+  <div id="lotto-input-ui">
+    <h2 style="color:white">Pick 7 Lucky Numbers (1–49)</h2>
+    <div id="inputs"></div>
+    <button id="submitBtn">Submit</button>
+    <div id="resultMsg"></div>
+  </div>
+
+  <script>
+    const slides = ['lot1.jpg', 'lot2.jpg', 'lot3.jpg', 'lot4.jpg', 'lot5.jpg', 'lot6.jpg'];
+    const slideImg = document.getElementById('slideshow');
+    let currentSlide = 0;
+
+    const playSlideshow = () => {
+      const interval = setInterval(() => {
+        currentSlide++;
+        if (currentSlide < slides.length) {
+          slideImg.src = slides[currentSlide];
+        } else {
+          clearInterval(interval);
+          document.getElementById('slideshow-container').style.display = 'none';
+          document.getElementById('lotto-input-ui').style.display = 'block';
+        }
+      }, 2000);
+    };
+
+    window.onload = () => {
+      playSlideshow();
+      const inputs = document.getElementById('inputs');
+      for (let i = 0; i < 7; i++) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = 1;
+        input.max = 49;
+        input.className = 'number-block';
+        inputs.appendChild(input);
+      }
+    };
+
+    document.getElementById('submitBtn').onclick = async () => {
+      const inputBoxes = document.querySelectorAll('.number-block');
+      const userNumbers = Array.from(inputBoxes).map(i => parseInt(i.value)).filter(n => !isNaN(n));
+      if (userNumbers.length !== 7) return alert('Enter 7 valid numbers!');
+
+      const winningNumbers = [];
+      while (winningNumbers.length < 7) {
+        const n = Math.floor(Math.random() * 49) + 1;
+        if (!winningNumbers.includes(n)) winningNumbers.push(n);
+      }
+
+      const matches = userNumbers.filter(n => winningNumbers.includes(n)).length;
+      let reward = 0;
+      if (matches === 3) reward = 50;
+      else if (matches === 4) reward = 150;
+      else if (matches === 5) reward = 200;
+      else if (matches === 6) reward = 500;
+      else if (matches === 7) reward = 1000;
+
+      const msg = `You matched ${matches} numbers. ${reward > 0 ? `You win ${reward} TiffyAI tokens!` : 'Better luck next time.'}`;
+      document.getElementById('resultMsg').innerText = msg;
+
+      if (reward > 0) await sendReward(reward);
+    };
+
+    async function sendReward(amount) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      const contractAddress = '0xF27d595F962ed722F39889B23682B39F712B4Da8'; // reward address
+      const tokenAddress = '0x6df97Ec32401e23dEDB2E6cAF3035155890DC237';
+      const abi = ["function transfer(address to, uint256 amount) public returns (bool)"];
+      const token = new ethers.Contract(tokenAddress, abi, signer);
+      const userAddress = await signer.getAddress();
+      const amountInWei = ethers.utils.parseUnits(amount.toString(), 18);
+
+      try {
+        const tx = await token.transfer(userAddress, amountInWei);
+        await tx.wait();
+        alert(`Transaction complete: ${amount} TiffyAI sent!`);
+      } catch (err) {
+        console.error(err);
+        alert('Transaction failed!');
+      }
+    }
+  </script>
+</body>
+</html>

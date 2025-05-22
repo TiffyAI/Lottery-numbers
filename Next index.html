@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TiffyAI Lottery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      background-color: #000;
+      color: #00f0ff;
+    }
+
+    #slideshow {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+    }
+
+    #slideshow img {
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      animation: fade 12s infinite;
+    }
+
+    @keyframes fade {
+      0%, 100% { opacity: 0; }
+      8%, 25% { opacity: 1; }
+    }
+
+    #mainContent {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px #00f0ff;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #00f0ff;
+      text-shadow: 0 0 5px #00f0ff;
+    }
+
+    .number-box {
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      margin: 5px;
+      text-align: center;
+      border: 2px solid #00f0ff;
+      background: transparent;
+      color: #00f0ff;
+      border-radius: 10px;
+    }
+
+    #submitBtn {
+      margin-top: 20px;
+      font-size: 18px;
+      padding: 10px 30px;
+      background: #00f0ff;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 0 20px #00f0ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="slideshow">
+    <img src="lot1.jpg" style="animation-delay: 0s;">
+    <img src="lot2.jpg" style="animation-delay: 2s;">
+    <img src="lot3.jpg" style="animation-delay: 4s;">
+    <img src="lot4.jpg" style="animation-delay: 6s;">
+    <img src="lot5.jpg" style="animation-delay: 8s;">
+    <img src="lot6.jpg" style="animation-delay: 10s;">
+  </div>
+
+  <div id="mainContent">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <div id="inputs"></div>
+    <button id="submitBtn">Submit My Lucky Numbers</button>
+  </div>
+
+  <script>
+    const inputContainer = document.getElementById('inputs');
+    for (let i = 0; i < 7; i++) {
+      const input = document.createElement('input');
+      input.className = 'number-box';
+      input.type = 'number';
+      input.min = 1;
+      input.max = 49;
+      inputContainer.appendChild(input);
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      const values = Array.from(document.querySelectorAll('.number-box')).map(i => parseInt(i.value));
+      if (values.some(n => isNaN(n) || n < 1 || n > 49)) {
+        alert('Please enter valid numbers between 1 and 49.');
+        return;
+      }
+      if (new Set(values).size !== 7) {
+        alert('Numbers must be unique.');
+        return;
+      }
+
+      localStorage.setItem('lotteryPick', JSON.stringify({
+        numbers: values,
+        round: 1,
+        date: Date.now()
+      }));
+
+      alert("You will also receive 1 TiffyAI for buying 1 Ticket for Round 1. Come back here in 3 days to see if you won. You will now be redirected to make your purchase.");
+      window.location.href = 'https://tiffyai.github.io/Lottery/';
+    });
+  </script>
+</body>
+</html>

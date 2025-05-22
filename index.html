@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TiffyAI Lottery</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: -2;
+      animation: slideshow 30s infinite;
+    }
+
+    @keyframes slideshow {
+      0%   { background-image: url('lot1.jpg'); }
+      16%  { background-image: url('lot2.jpg'); }
+      32%  { background-image: url('lot3.jpg'); }
+      48%  { background-image: url('lot4.jpg'); }
+      64%  { background-image: url('lot5.jpg'); }
+      80%  { background-image: url('lot6.jpg'); }
+      100% { background-image: url('lot1.jpg'); }
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: -1;
+    }
+
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #00eaff;
+      text-shadow: 0 0 10px #00eaff;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    .number-boxes {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .number-boxes input {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5em;
+      text-align: center;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: #000;
+      color: #00eaff;
+      box-shadow: 0 0 10px #00eaff;
+    }
+
+    .btn {
+      background: linear-gradient(90deg, #00eaff, #00ffd5);
+      color: #000;
+      padding: 10px 30px;
+      border-radius: 30px;
+      font-size: 1.2em;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00eaff;
+      transition: transform 0.2s;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    #console {
+      margin-top: 30px;
+      font-size: 1em;
+      max-width: 600px;
+      text-align: center;
+      white-space: pre-wrap;
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="container">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <div class="number-boxes" id="inputs"></div>
+    <button class="btn" onclick="submitNumbers()">Submit My Lucky Numbers</button>
+    <div id="console"></div>
+  </div>
+
+  <script>
+    const inputContainer = document.getElementById("inputs");
+    for (let i = 0; i < 7; i++) {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = 1;
+      input.max = 49;
+      input.maxLength = 2;
+      inputContainer.appendChild(input);
+    }
+
+    function submitNumbers() {
+      const inputs = [...document.querySelectorAll(".number-boxes input")];
+      const numbers = inputs.map(i => parseInt(i.value)).filter(n => !isNaN(n));
+      if (numbers.length !== 7 || new Set(numbers).size !== 7 || numbers.some(n => n < 1 || n > 49)) {
+        alert("Please enter 7 unique numbers between 1 and 49.");
+        return;
+      }
+      localStorage.setItem("lottery_ticket_round_1", JSON.stringify(numbers));
+      document.getElementById("console").innerText =
+        `You will also receive 1 TiffyAI for buying 1 Ticket for Round 1.\nCome back here in 3 days to see if you won.\nYou will now be redirected to make your purchase.`;
+      setTimeout(() => {
+        window.location.href = "https://tiffyai.github.io/Lottery/";
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

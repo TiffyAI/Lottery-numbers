@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TiffyAI Lottery Numbers</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      background: black;
+      color: #00eaff;
+    }
+    #slideshow {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    .slide.active {
+      opacity: 1;
+    }
+    #lottoUI {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00eaff;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00eaff;
+    }
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .number-block {
+      background: #111;
+      color: #00eaff;
+      padding: 15px;
+      font-size: 18px;
+      border: 2px solid #00eaff;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+    .number-block.selected {
+      background: #00eaff;
+      color: black;
+    }
+    #submitBtn {
+      background: linear-gradient(90deg, #00eaff, #0077ff);
+      border: none;
+      padding: 10px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: black;
+      box-shadow: 0 0 10px #00eaff;
+    }
+    #consoleMsg {
+      margin-top: 20px;
+      font-size: 16px;
+      white-space: pre-wrap;
+      text-shadow: 0 0 5px #00eaff;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="slideshow">
+    <div class="slide" style="background-image: url('lot1.jpg');"></div>
+    <div class="slide" style="background-image: url('lot2.jpg');"></div>
+    <div class="slide" style="background-image: url('lot3.jpg');"></div>
+    <div class="slide" style="background-image: url('lot4.jpg');"></div>
+    <div class="slide" style="background-image: url('lot5.jpg');"></div>
+    <div class="slide" style="background-image: url('lot6.jpg');"></div>
+  </div>
+
+  <div id="lottoUI">
+    <h1>Pick 7 Lucky Numbers Between 1 & 49</h1>
+    <div class="number-grid" id="numberGrid"></div>
+    <button id="submitBtn">Submit My Lucky Numbers</button>
+    <div id="consoleMsg"></div>
+  </div>
+
+  <script>
+    // Slideshow
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+    function showSlide(index) {
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+    }
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % slides.length;
+      showSlide(currentSlide);
+    }
+    showSlide(currentSlide);
+    setInterval(nextSlide, 2000);
+
+    // Lottery Input
+    const numberGrid = document.getElementById("numberGrid");
+    const selectedNumbers = [];
+    for (let i = 1; i <= 49; i++) {
+      const block = document.createElement("div");
+      block.classList.add("number-block");
+      block.textContent = i;
+      block.onclick = () => {
+        if (block.classList.contains("selected")) {
+          block.classList.remove("selected");
+          selectedNumbers.splice(selectedNumbers.indexOf(i), 1);
+        } else if (selectedNumbers.length < 7) {
+          block.classList.add("selected");
+          selectedNumbers.push(i);
+        }
+      };
+      numberGrid.appendChild(block);
+    }
+
+    document.getElementById("submitBtn").onclick = () => {
+      if (selectedNumbers.length !== 7) {
+        alert("Please pick exactly 7 numbers!");
+        return;
+      }
+      const bonus = selectedNumbers[6];
+      const regular = selectedNumbers.slice(0, 6);
+      const ticket = { numbers: regular, bonus: bonus, timestamp: Date.now() };
+      localStorage.setItem("tiffy_ticket", JSON.stringify(ticket));
+      document.getElementById("consoleMsg").textContent = `You will also receive 1 TiffyAI for buying 1 Ticket for Round 1.\nCome back here in 3 days to see if you won.\nYou will now be redirected to make your purchase.`;
+      setTimeout(() => {
+        window.location.href = "https://tiffyai.github.io/Lottery/";
+      }, 4000);
+    };
+  </script>
+</body>
+</html>
